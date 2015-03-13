@@ -20,9 +20,11 @@
 
 #include "Packet.h"
 #include "Creature.h"
-#include "DB2Stores.h"
 #include "NPCHandler.h"
 #include "G3D/Vector3.h"
+#include "DB2Stores.h"
+
+class Player;
 
 namespace WorldPackets
 {
@@ -85,21 +87,22 @@ namespace WorldPackets
             void Read() override;
 
             ObjectGuid Player;
-            PlayerGuidLookupHint Hint;
         };
 
         struct PlayerGuidLookupData
         {
-            bool IsDeleted             = false;
+            bool Initialize(ObjectGuid const& guid, Player const* player = nullptr);
+
+            bool IsDeleted = false;
             ObjectGuid AccountID;
             ObjectGuid BnetAccountID;
             ObjectGuid GuidActual;
             std::string Name;
             uint32 VirtualRealmAddress = 0;
-            uint8 Race                 = RACE_NONE;
-            uint8 Sex                  = GENDER_NONE;
-            uint8 ClassID              = CLASS_NONE;
-            uint8 Level                = 0;
+            uint8 Race = RACE_NONE;
+            uint8 Sex = GENDER_NONE;
+            uint8 ClassID = CLASS_NONE;
+            uint8 Level = 0;
             DeclinedName DeclinedNames;
         };
 
@@ -196,10 +199,7 @@ namespace WorldPackets
             uint32 TableHash = 0;
             uint32 Timestamp = 0;
             int32 RecordID   = 0;
-
-            // These are not sent directly
-            uint32 Locale = 0;
-            DB2StorageBase const* Data = nullptr;
+            ByteBuffer Data;
         };
 
         class HotfixNotifyBlob final : public ServerPacket
@@ -314,9 +314,12 @@ namespace WorldPackets
             WorldPacket const* Write() override;
 
             time_t CurrentTime = time_t(0);
-            int32 TimeOutRequest;
+            int32 TimeOutRequest = 0;
         };
     }
 }
+
+ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Query::PlayerGuidLookupHint const& lookupHint);
+ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Query::PlayerGuidLookupData const& lookupData);
 
 #endif // QueryPackets_h__

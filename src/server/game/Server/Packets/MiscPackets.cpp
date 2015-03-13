@@ -16,12 +16,11 @@
  */
 
 #include "MiscPackets.h"
+#include "PacketUtilities.h"
 
 WorldPacket const* WorldPackets::Misc::BindPointUpdate::Write()
 {
-    _worldPacket << float(BindPosition.x);
-    _worldPacket << float(BindPosition.y);
-    _worldPacket << float(BindPosition.z);
+    _worldPacket << BindPosition;
     _worldPacket << uint32(BindMapID);
     _worldPacket << uint32(BindAreaID);
 
@@ -218,9 +217,7 @@ WorldPacket const* WorldPackets::Misc::CorpseReclaimDelay::Write()
 WorldPacket const* WorldPackets::Misc::DeathReleaseLoc::Write()
 {
     _worldPacket << MapID;
-    _worldPacket << float(Loc.x);
-    _worldPacket << float(Loc.y);
-    _worldPacket << float(Loc.z);
+    _worldPacket << Loc;
 
     return &_worldPacket;
 }
@@ -258,4 +255,127 @@ void WorldPackets::Misc::ResurrectResponse::Read()
 {
     _worldPacket >> Resurrecter;
     _worldPacket >> Response;
+}
+
+WorldPackets::Misc::Weather::Weather() : ServerPacket(SMSG_WEATHER, 4 + 4 + 1) { }
+
+WorldPackets::Misc::Weather::Weather(WeatherState weatherID, float intensity /*= 0.0f*/, bool abrupt /*= false*/)
+    : ServerPacket(SMSG_WEATHER, 4 + 4 + 1), Abrupt(abrupt), Intensity(intensity), WeatherID(weatherID) { }
+
+WorldPacket const* WorldPackets::Misc::Weather::Write()
+{
+    _worldPacket << uint32(WeatherID);
+    _worldPacket << float(Intensity);
+    _worldPacket.WriteBit(Abrupt);
+
+    _worldPacket.FlushBits();
+    return &_worldPacket;
+}
+
+void WorldPackets::Misc::StandStateChange::Read()
+{
+    uint32 state;
+    _worldPacket >> state;
+
+    StandState = UnitStandStateType(state);
+}
+
+WorldPacket const* WorldPackets::Misc::StandStateUpdate::Write()
+{
+    _worldPacket << uint8(State);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Misc::PlayerBound::Write()
+{
+    _worldPacket << BinderID;
+    _worldPacket << uint32(AreaID);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Misc::BinderConfirm::Write()
+{
+    _worldPacket << Unit;
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Misc::StartMirrorTimer::Write()
+{
+    _worldPacket << int32(Timer);
+    _worldPacket << int32(Value);
+    _worldPacket << int32(MaxValue);
+    _worldPacket << int32(Scale);
+    _worldPacket << int32(SpellID);
+    _worldPacket.WriteBit(Paused);
+    _worldPacket.FlushBits();
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Misc::PauseMirrorTimer::Write()
+{
+    _worldPacket << int32(Timer);
+    _worldPacket.WriteBit(Paused);
+    _worldPacket.FlushBits();
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Misc::StopMirrorTimer::Write()
+{
+    _worldPacket << int32(Timer);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Misc::ExplorationExperience::Write()
+{
+    _worldPacket << int32(AreaID);
+    _worldPacket << int32(Experience);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Misc::LevelUpInfo::Write()
+{
+    _worldPacket << int32(Level);
+    _worldPacket << int32(HealthDelta);
+
+    for (int32 power : PowerDelta)
+        _worldPacket << power;
+
+    for (int32 stat : StatDelta)
+        _worldPacket << stat;
+
+    _worldPacket << int32(Cp);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Misc::PlayMusic::Write()
+{
+    _worldPacket << uint32(SoundKitID);
+
+    return &_worldPacket;
+}
+
+void WorldPackets::Misc::RandomRollClient::Read()
+{
+    _worldPacket >> Min;
+    _worldPacket >> Max;
+    _worldPacket >> PartyIndex;
+}
+
+WorldPacket const* WorldPackets::Misc::RandomRoll::Write()
+{
+    _worldPacket << Roller;
+    _worldPacket << RollerWowAccount;
+    _worldPacket << int32(Min);
+    _worldPacket << int32(Max);
+    _worldPacket << int32(Result);
+
+    return &_worldPacket;
 }
